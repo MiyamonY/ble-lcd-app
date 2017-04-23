@@ -81,7 +81,7 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     private BluetoothAdapter mBtAdapter = null;
     private ListView messageListView;
     private ArrayAdapter<String> listAdapter;
-    private Button btnConnectDisconnect,btnSend;
+    private Button btnConnectDisconnect,btnSend, btnUp, btnDown, btnClear,btnSet1;
     private EditText edtMessage;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,6 +99,10 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
         messageListView.setDivider(null);
         btnConnectDisconnect=(Button) findViewById(R.id.btn_select);
         btnSend=(Button) findViewById(R.id.sendButton);
+        btnUp = (Button)findViewById(R.id.upButton);
+        btnDown = (Button)findViewById(R.id.downButton);
+        btnClear = (Button)findViewById(R.id.clearButton);
+        btnSet1 = (Button)findViewById(R.id.set1Button);
         edtMessage = (EditText) findViewById(R.id.sendText);
         service_init();
 
@@ -154,11 +158,78 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 
             }
         });
-     
+
+        btnUp.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                byte[] value = {0x2c};
+                sendBytesToBleDevice(value, "move cursor up");
+            }
+        });
+
+        btnDown.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                byte[] value = {0x3c};
+                sendBytesToBleDevice(value, "move cursor down");
+            }
+        });
+
+        btnClear.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                byte[] value = {0x7f};
+                sendBytesToBleDevice(value, "clear display");
+            }
+        });
         // Set initial UI state
-        
+        btnSet1.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                try {
+                    //send data to service
+                    String message = "Hi, I'm ";
+                    byte[] value = message.getBytes("UTF-8");
+                    sendBytesToBleDevice(value, message);
+
+                    message = "MIYAMOTO ";
+                    value = message.getBytes("UTF-8");
+                    sendBytesToBleDevice(value, message);
+
+                    message = "Yohei, ";
+                    value = message.getBytes("UTF-8");
+                    sendBytesToBleDevice(value, message);
+
+                    message = "embedded ";
+                    value = message.getBytes("UTF-8");
+                    sendBytesToBleDevice(value, message);
+
+                    message = " engineer.";
+                    value = message.getBytes("UTF-8");
+                    sendBytesToBleDevice(value, message);
+                } catch (UnsupportedEncodingException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+
+            }
+        });
     }
-    
+
+    private void sendBytesToBleDevice(byte[] value, String display){
+        mService.writeRXCharacteristic(value);
+        String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
+        listAdapter.add("["+currentDateTimeString+"] " + display);
+        messageListView.smoothScrollToPosition(listAdapter.getCount() - 1);
+        edtMessage.setText("");
+        try {
+            Thread.sleep(100);
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
+    }
+
     //UART service connected/disconnected
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder rawBinder) {
@@ -201,6 +272,10 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                              btnConnectDisconnect.setText("Disconnect");
                              edtMessage.setEnabled(true);
                              btnSend.setEnabled(true);
+                            btnUp.setEnabled(true);
+                            btnDown.setEnabled(true);
+                         btnSet1.setEnabled(true);
+                             btnClear.setEnabled(true);
                              ((TextView) findViewById(R.id.deviceName)).setText(mDevice.getName()+ " - ready");
                              listAdapter.add("["+currentDateTimeString+"] Connected to: "+ mDevice.getName());
                         	 	messageListView.smoothScrollToPosition(listAdapter.getCount() - 1);
@@ -218,6 +293,10 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                              btnConnectDisconnect.setText("Connect");
                              edtMessage.setEnabled(false);
                              btnSend.setEnabled(false);
+                            btnDown.setEnabled(false);
+                         btnUp.setEnabled(false);
+                         btnSet1.setEnabled(false);
+                             btnClear.setEnabled(false);
                              ((TextView) findViewById(R.id.deviceName)).setText("Not Connected");
                              listAdapter.add("["+currentDateTimeString+"] Disconnected to: "+ mDevice.getName());
                              mState = UART_PROFILE_DISCONNECTED;

@@ -39,6 +39,8 @@ import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.List;
 import java.util.UUID;
 
@@ -108,6 +110,33 @@ public class UartService extends Service {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (status != 0) {
+                mBluetoothAdapter.disable();
+
+                Timer single_timer = new Timer();
+                single_timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        mBluetoothAdapter.enable();
+                    }
+                }, 1000);
+
+                /*Timer second_timer = new Timer();
+                second_timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        gattServiceIntent = new Intent(context, BluetoothLeService.class);
+                        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+                        mBluetoothLeService.initialize();
+                        mBluetoothLeService.connect(mDeviceAddress);
+                        //maybe you need wait 0.5-1 second to call connect() after called initialize()
+                    }
+                }, 2000);*/
+
+
+                Log.e(TAG, "An error code get at onServicesDiscovered= " + status);
+            }
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
             	Log.w(TAG, "mBluetoothGatt = " + mBluetoothGatt );
             	
